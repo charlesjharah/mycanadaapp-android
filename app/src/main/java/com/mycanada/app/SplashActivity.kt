@@ -15,11 +15,11 @@ class SplashActivity : AppCompatActivity() {
         val viewPager = findViewById<ViewPager2>(R.id.viewPager)
         val btnNext = findViewById<Button>(R.id.btnNext)
 
-        val titles = listOf("Welcome to MyCanada", "Maximize Benefits", "Secure & Private")
+        val titles = listOf("Welcome to MyCanada", "Maximize Your Benefits", "Secure & Private")
         val descs = listOf(
-            "Access all your government benefits in one simple dashboard.",
-            "Our smart logic finds every program you are eligible for.",
-            "Your data is encrypted and stored locally on your device."
+            "Your personal gateway to government benefits, managed simply and effectively.",
+            "Our smart logic automatically finds every program you are eligible for.",
+            "Your data is encrypted and stored locally on your device. We prioritize your privacy."
         )
         val images = listOf(R.drawable.img_intro_1, R.drawable.img_intro_2, R.drawable.img_intro_3)
 

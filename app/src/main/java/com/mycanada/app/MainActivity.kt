@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private var cameraImageUri: Uri? = null
 
-    // *** CHANGE THIS URL IF NEEDED ***
-    private val TARGET_URL = "https://your-live-website.com/index.php" 
+    // *** UPDATED LIVE URL ***
+    private val TARGET_URL = "https://mycanadaapp.ca/api/index.php" 
 
     private val fileSelectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (fileUploadCallback != null) {
@@ -68,9 +68,11 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url.toString()
-                if (url.contains("mycanada") || url.contains("your-domain") || url.contains("php")) { 
+                // Keep user within the app domain
+                if (url.contains("mycanadaapp.ca")) { 
                     return false
                 }
+                // Open external links (Banks, etc) in Chrome
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(intent)
                 return true
