@@ -9,16 +9,16 @@
     <ImageView
         android:id="@+id/imgOnboarding"
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="350dp"
         android:src="@drawable/img_intro_1"
         android:scaleType="centerCrop"
-        android:layout_marginBottom="40dp"/>
+        android:layout_marginBottom="30dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="32dp"
+        android:paddingHorizontal="24dp"
         android:gravity="center">
 
         <TextView
@@ -26,9 +26,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Welcome"
-            android:textSize="28sp"
+            android:textSize="32sp"
+            android:textStyle="bold"
             android:fontFamily="@font/montserrat_bold"
-            android:textColor="#1e293b"
+            android:textColor="#000000"
             android:textAlignment="center"
             android:layout_marginBottom="16dp"/>
 
@@ -37,10 +38,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Description goes here."
-            android:textSize="16sp"
+            android:textSize="18sp"
+            android:textStyle="normal"
             android:fontFamily="@font/montserrat_regular"
-            android:textColor="#64748b"
+            android:textColor="#334155"
             android:textAlignment="center"
-            android:lineSpacingExtra="4dp"/>
+            android:lineSpacingExtra="6dp"/>
     </LinearLayout>
 </LinearLayout>
