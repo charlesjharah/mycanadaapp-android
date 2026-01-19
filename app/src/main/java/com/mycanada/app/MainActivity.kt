@@ -8,7 +8,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.view.View
 import android.webkit.*
+import android.widget.ProgressBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -20,11 +22,12 @@ import java.util.Date
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private var cameraImageUri: Uri? = null
 
-    // *** CHANGE THIS URL TO YOUR LIVE PHP SITE ***
-    private val TARGET_URL = "https://mycanadaapp.ca/api/index.php" 
+    // *** CHANGE THIS URL IF NEEDED ***
+    private val TARGET_URL = "https://your-live-website.com/index.php" 
 
     private val fileSelectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (fileUploadCallback != null) {
@@ -52,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webview)
+        progressBar = findViewById(R.id.progressBar)
         checkPermissions()
 
         val webSettings = webView.settings
@@ -64,53 +68,49 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url.toString()
-                if (url.contains(TARGET_URL) || url.contains("mycanada")) { 
+                if (url.contains("mycanada") || url.contains("your-domain") || url.contains("php")) { 
                     return false
                 }
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(intent)
                 return true
             }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                progressBar.visibility = View.GONE
+                webView.visibility = View.VISIBLE
+                super.onPageFinished(view, url)
+            }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowFileChooser(webView: WebView?, filePathCallback: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
-                if (fileUploadCallback != null) {
-                    fileUploadCallback?.onReceiveValue(null)
-                }
+                if (fileUploadCallback != null) fileUploadCallback?.onReceiveValue(null)
                 fileUploadCallback = filePathCallback
 
                 var takePictureIntent: Intent? = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 if (takePictureIntent!!.resolveActivity(packageManager) != null) {
                     var photoFile: File? = null
-                    try {
-                        photoFile = createImageFile()
-                    } catch (ex: IOException) {}
-                    
+                    try { photoFile = createImageFile() } catch (ex: IOException) {}
                     if (photoFile != null) {
                         cameraImageUri = FileProvider.getUriForFile(this@MainActivity, "com.mycanada.app.provider", photoFile)
                         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
-                    } else {
-                        takePictureIntent = null
-                    }
+                    } else { takePictureIntent = null }
                 }
-
-                val contentSelectionIntent = Intent(Intent.ACTION_GET_CONTENT)
-                contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE)
-                contentSelectionIntent.type = "*/*"
-
+                val contentSelectionIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }
                 val intentArray: Array<Intent?> = if (takePictureIntent != null) arrayOf(takePictureIntent) else arrayOfNulls(0)
-                val chooserIntent = Intent(Intent.ACTION_CHOOSER)
-                chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent)
-                chooserIntent.putExtra(Intent.EXTRA_TITLE, "Upload or Take Photo")
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray)
-
+                val chooserIntent = Intent(Intent.ACTION_CHOOSER).apply {
+                    putExtra(Intent.EXTRA_INTENT, contentSelectionIntent)
+                    putExtra(Intent.EXTRA_TITLE, "Upload or Take Photo")
+                    putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray)
+                }
                 fileSelectionLauncher.launch(chooserIntent)
                 return true
             }
-            override fun onPermissionRequest(request: PermissionRequest) {
-                request.grant(request.resources)
-            }
+            override fun onPermissionRequest(request: PermissionRequest) { request.grant(request.resources) }
         }
         webView.loadUrl(TARGET_URL)
     }
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
     private fun createImageFile(): File {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
         val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+        return File.createTempFile("JPEG__", ".jpg", storageDir)
     }
 
     private fun checkPermissions() {

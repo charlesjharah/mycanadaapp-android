@@ -1,0 +1,393 @@
+#!/bin/bash
+
+# 1. Create Directories
+echo "Creating directories..."
+mkdir -p app/src/main/res/drawable
+mkdir -p app/src/main/res/layout
+mkdir -p app/src/main/java/com/mycanada/app
+mkdir -p app/src/main/res/xml
+
+# 2. Download Images (Overwriting if exists)
+echo "Downloading images..."
+curl -L "https://placehold.co/600x400/indigo/white/png?text=Welcome" -o app/src/main/res/drawable/img_intro_1.png
+curl -L "https://placehold.co/600x400/green/white/png?text=Benefits" -o app/src/main/res/drawable/img_intro_2.png
+curl -L "https://placehold.co/600x400/orange/white/png?text=Secure" -o app/src/main/res/drawable/img_intro_3.png
+
+# 3. Write: item_onboarding_page.xml
+echo "Writing layouts..."
+cat <<EOF > app/src/main/res/layout/item_onboarding_page.xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#FFFFFF">
+
+    <ImageView
+        android:id="@+id/imgOnboarding"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:src="@drawable/img_intro_1"
+        android:scaleType="fitCenter"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#1e293b"
+        android:textAlignment="center"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/textDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description goes here."
+        android:textSize="16sp"
+        android:textColor="#64748b"
+        android:textAlignment="center"/>
+</LinearLayout>
+EOF
+
+# 4. Write: activity_splash.xml
+cat <<EOF > app/src/main/res/layout/activity_splash.xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btnNext" />
+
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Next"
+        android:backgroundTint="#0f172a"
+        android:textColor="#FFFFFF"
+        android:layout_margin="24dp"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+EOF
+
+# 5. Write: OnboardingAdapter.kt
+echo "Writing Kotlin files..."
+cat <<EOF > app/src/main/java/com/mycanada/app/OnboardingAdapter.kt
+package com.mycanada.app
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+
+class OnboardingAdapter(
+    private val titles: List<String>, 
+    private val descs: List<String>, 
+    private val images: List<Int>
+) : RecyclerView.Adapter<OnboardingAdapter.OnboardingViewHolder>() {
+
+    inner class OnboardingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val image: ImageView = view.findViewById(R.id.imgOnboarding)
+        val title: TextView = view.findViewById(R.id.textTitle)
+        val desc: TextView = view.findViewById(R.id.textDescription)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OnboardingViewHolder {
+        return OnboardingViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_onboarding_page, parent, false)
+        )
+    }
+
+    override fun onBindViewHolder(holder: OnboardingViewHolder, position: Int) {
+        holder.title.text = titles[position]
+        holder.desc.text = descs[position]
+        holder.image.setImageResource(images[position])
+    }
+
+    override fun getItemCount(): Int = titles.size
+}
+EOF
+
+# 6. Write: SplashActivity.kt
+cat <<EOF > app/src/main/java/com/mycanada/app/SplashActivity.kt
+package com.mycanada.app
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
+import androidx.viewpager2.widget.ViewPager2
+
+class SplashActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_splash)
+
+        val viewPager = findViewById<ViewPager2>(R.id.viewPager)
+        val btnNext = findViewById<Button>(R.id.btnNext)
+
+        val titles = listOf("Welcome to MyCanada", "Maximize Benefits", "Secure & Private")
+        val descs = listOf(
+            "Access all your government benefits in one simple dashboard.",
+            "Our smart logic finds every program you are eligible for.",
+            "Your data is encrypted and stored locally on your device."
+        )
+        val images = listOf(R.drawable.img_intro_1, R.drawable.img_intro_2, R.drawable.img_intro_3)
+
+        viewPager.adapter = OnboardingAdapter(titles, descs, images)
+
+        btnNext.setOnClickListener {
+            if (viewPager.currentItem < titles.size - 1) {
+                viewPager.currentItem += 1
+            } else {
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+        }
+        
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (position == titles.size - 1) {
+                    btnNext.text = "Get Started"
+                } else {
+                    btnNext.text = "Next"
+                }
+            }
+        })
+    }
+}
+EOF
+
+# 7. Write: activity_main.xml (Spinner Layout)
+cat <<EOF > app/src/main/res/layout/activity_main.xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+EOF
+
+# 8. Write: MainActivity.kt
+cat <<EOF > app/src/main/java/com/mycanada/app/MainActivity.kt
+package com.mycanada.app
+
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.view.View
+import android.webkit.*
+import android.widget.ProgressBar
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
+    private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private var cameraImageUri: Uri? = null
+
+    // *** CHANGE THIS URL IF NEEDED ***
+    private val TARGET_URL = "https://your-live-website.com/index.php" 
+
+    private val fileSelectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (fileUploadCallback != null) {
+            var results: Array<Uri>? = null
+            if (result.resultCode == Activity.RESULT_OK) {
+                if (result.data?.data != null) {
+                    results = arrayOf(result.data!!.data!!)
+                } else if (cameraImageUri != null) {
+                    results = arrayOf(cameraImageUri!!)
+                }
+            }
+            fileUploadCallback?.onReceiveValue(results)
+            fileUploadCallback = null
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions[Manifest.permission.CAMERA] == true) {
+            webView.reload()
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        webView = findViewById(R.id.webview)
+        progressBar = findViewById(R.id.progressBar)
+        checkPermissions()
+
+        val webSettings = webView.settings
+        webSettings.javaScriptEnabled = true
+        webSettings.domStorageEnabled = true
+        webSettings.allowFileAccess = true
+        webSettings.mediaPlaybackRequiresUserGesture = false
+        webSettings.databaseEnabled = true
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val url = request?.url.toString()
+                if (url.contains("mycanada") || url.contains("your-domain") || url.contains("php")) { 
+                    return false
+                }
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(intent)
+                return true
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                progressBar.visibility = View.GONE
+                webView.visibility = View.VISIBLE
+                super.onPageFinished(view, url)
+            }
+        }
+
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(webView: WebView?, filePathCallback: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
+                if (fileUploadCallback != null) fileUploadCallback?.onReceiveValue(null)
+                fileUploadCallback = filePathCallback
+
+                var takePictureIntent: Intent? = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                if (takePictureIntent!!.resolveActivity(packageManager) != null) {
+                    var photoFile: File? = null
+                    try { photoFile = createImageFile() } catch (ex: IOException) {}
+                    if (photoFile != null) {
+                        cameraImageUri = FileProvider.getUriForFile(this@MainActivity, "com.mycanada.app.provider", photoFile)
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri)
+                    } else { takePictureIntent = null }
+                }
+                val contentSelectionIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }
+                val intentArray: Array<Intent?> = if (takePictureIntent != null) arrayOf(takePictureIntent) else arrayOfNulls(0)
+                val chooserIntent = Intent(Intent.ACTION_CHOOSER).apply {
+                    putExtra(Intent.EXTRA_INTENT, contentSelectionIntent)
+                    putExtra(Intent.EXTRA_TITLE, "Upload or Take Photo")
+                    putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray)
+                }
+                fileSelectionLauncher.launch(chooserIntent)
+                return true
+            }
+            override fun onPermissionRequest(request: PermissionRequest) { request.grant(request.resources) }
+        }
+        webView.loadUrl(TARGET_URL)
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    }
+
+    private fun checkPermissions() {
+        val permissions = mutableListOf(Manifest.permission.CAMERA, Manifest.permission.INTERNET)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        requestPermissionLauncher.launch(permissions.toTypedArray())
+    }
+
+    override fun onBackPressed() {
+        if (webView.canGoBack()) webView.goBack() else super.onBackPressed()
+    }
+}
+EOF
+
+# 9. Write: AndroidManifest.xml
+echo "Updating Manifest..."
+cat <<EOF > app/src/main/AndroidManifest.xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="MyCanada"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.mycanada.app.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".MainActivity" android:exported="false" />
+    </application>
+</manifest>
+EOF
+
+echo "DONE! All files created successfully."
